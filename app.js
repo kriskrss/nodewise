@@ -16,10 +16,122 @@ function roots(){ return nodes.filter(n=>!n.parentId).sort((a,b)=>a.order-b.orde
 function rootOf(n){ while(n && n.parentId) n = byId(n.parentId); return n; }
 function descendants(id){ const out=[]; (function walk(i){ children(i).forEach(c=>{out.push(c); walk(c.id);}); })(id); return out; }
 function isTask(n){ return n.isTask !== false; }
-function save(){ localStorage.setItem(KEY, JSON.stringify(nodes)); }
+
+/* ---------------- vault + sync (passcode encrypted, Supabase) ---------------- */
+const VAULT_KEY = "nodewise-vault-v2";
+const V = (typeof NodewiseVault !== "undefined") ? NodewiseVault : null;
+let vaultSession = null, vaultVersion = 0, saveChain = Promise.resolve(), pushTimer = null;
+function vaultActive(){ return !!vaultSession; }
+function save(){
+  if(V && vaultActive()){ queueVaultSave(); return; }
+  if(V && lockPending){ return; } /* gated build: nothing is written in plain text */
+  localStorage.setItem(KEY, JSON.stringify(nodes));
+}
+function queueVaultSave(){
+  const data = JSON.parse(JSON.stringify(nodes));
+  vaultVersion++;
+  const version = vaultVersion;
+  saveChain = saveChain.then(async ()=>{
+    try{
+      const env = await V.encryptWithSession(vaultSession, data, version);
+      localStorage.setItem(VAULT_KEY, JSON.stringify(env));
+      setSyncStatus("Saved on this device");
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(async ()=>{
+        try{
+          const ok = await V.pushRemote(vaultSession.locator, env);
+          setSyncStatus(ok ? "Synced " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}) : "Sync not set up yet. Saved on this device only.");
+        }catch(e){ setSyncStatus("Sync failed. Saved on this device. It will retry on the next change after a reload."); }
+      }, 1200);
+    }catch(e){ setSyncStatus("Save failed in this browser."); }
+  });
+}
+function setSyncStatus(msg){ const el = $("#sync-status"); if(el) el.textContent = msg; }
+let lockPending = false, pendingLegacy = null, localEnvelope = null;
+function readJSON(key){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
 function load(){
-  try{ const raw = localStorage.getItem(KEY); if(raw){ nodes = JSON.parse(raw); return; } }catch(e){}
+  /* legacy plain-text path, used only when the vault script is absent */
+  const data = readJSON(KEY);
+  if(data){ nodes = data; return; }
   nodes = seed(); save();
+}
+function showLock(mode){
+  lockPending = true;
+  $("#lock").classList.remove("hidden");
+  $("#lock-setup").classList.toggle("hidden", mode !== "setup");
+  $("#lock-unlock").classList.toggle("hidden", mode !== "unlock");
+  $("#lock-error").textContent = "";
+}
+function hideLock(){ lockPending = false; $("#lock").classList.add("hidden"); }
+async function finishUnlock(data, version){
+  nodes = Array.isArray(data) ? data : seed();
+  vaultVersion = version || 0;
+  localStorage.removeItem(KEY);
+  hideLock();
+  go("map"); fitMap();
+  setSyncStatus(V.syncConfigured() ? "Unlocked" : "Sync not set up yet. Saved on this device only.");
+  save();
+}
+async function tryRemoteAdopt(passcode){
+  const remote = await V.fetchRemote(vaultSession.locator);
+  if(!remote) return false;
+  const opened = await V.decryptEnvelope(passcode, remote.envelope);
+  vaultSession = opened.session;
+  localStorage.setItem(VAULT_KEY, JSON.stringify(remote.envelope));
+  await finishUnlock(opened.data, opened.version);
+  return true;
+}
+async function lockSetup(){
+  const p1 = $("#lock-pass").value, p2 = $("#lock-pass2").value;
+  const err = $("#lock-error");
+  if(!p1 || p1.length < 4){ err.textContent = "Use a passcode of at least 4 characters."; return; }
+  if(p1 !== p2){ err.textContent = "The two passcodes do not match."; return; }
+  err.textContent = "Setting up…";
+  try{
+    vaultSession = await V.makeSession(p1);
+    if(V.syncConfigured() && await tryRemoteAdopt(p1)){ return; }
+    const data = pendingLegacy || seed();
+    pendingLegacy = null;
+    await finishUnlock(data, 0);
+  }catch(e){ err.textContent = "Setup failed: " + e.message; }
+}
+async function lockUnlock(){
+  const p = $("#lock-pass-u").value;
+  const err = $("#lock-error");
+  if(!p){ err.textContent = "Type your passcode."; return; }
+  err.textContent = "Unlocking…";
+  try{
+    if(localEnvelope){
+      const opened = await V.decryptEnvelope(p, localEnvelope);
+      vaultSession = opened.session;
+      let data = opened.data, version = opened.version;
+      if(V.syncConfigured()){
+        try{
+          const remote = await V.fetchRemote(vaultSession.locator);
+          if(remote && remote.envelope && remote.envelope.updatedAt > (localEnvelope.updatedAt || "")){
+            const newer = await V.decryptEnvelope(p, remote.envelope);
+            data = newer.data; version = newer.version; vaultSession = newer.session;
+            localStorage.setItem(VAULT_KEY, JSON.stringify(remote.envelope));
+          }
+        }catch(e){ /* local copy still opens offline */ }
+      }
+      await finishUnlock(data, version);
+    } else {
+      vaultSession = { locator: await V.deriveLocator(p) };
+      if(!(await tryRemoteAdopt(p))){ err.textContent = "No synced map found for that passcode."; vaultSession = null; }
+    }
+  }catch(e){
+    err.textContent = e.code === "wrong-passcode" ? "That passcode did not open this map." : ("Unlock failed: " + e.message);
+  }
+}
+function boot(){
+  if(!V){ load(); go("map"); fitMap(); return; }
+  pendingLegacy = readJSON(KEY);
+  localEnvelope = readJSON(VAULT_KEY);
+  if(localEnvelope){ showLock("unlock"); }
+  else { showLock("setup"); }
+  if(pendingLegacy || localEnvelope){ /* wait for the passcode */ }
+  else { pendingLegacy = seed(); }
 }
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.remove("hidden"); setTimeout(()=>t.classList.add("hidden"),2200); }
 
@@ -466,23 +578,46 @@ $("#fab").addEventListener("click", ()=>{
   else if(view==="map" && selectedId) openSheet(null, selectedId);
   else openSheet(null, null);
 });
-$("#btn-export").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(nodes,null,2)], {type:"application/json"});
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nodewise-export.json"; a.click();
+$("#btn-export").addEventListener("click", async ()=>{
+  let payload, name;
+  if(V && vaultActive()){
+    const env = await V.encryptWithSession(vaultSession, JSON.parse(JSON.stringify(nodes)), vaultVersion);
+    payload = JSON.stringify(env); name = "nodewise-backup.json";
+  } else {
+    payload = JSON.stringify(nodes, null, 2); name = "nodewise-export.json";
+  }
+  const blob = new Blob([payload], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
   URL.revokeObjectURL(a.href);
 });
 $("#file-import").addEventListener("change", e=>{
   const f = e.target.files[0]; if(!f) return;
-  f.text().then(txt=>{
-    try{ const data = JSON.parse(txt); if(!Array.isArray(data)) throw 0; nodes = data; save(); go("map"); fitMap(); toast("Imported"); }
-    catch(err){ toast("That file could not be read"); }
+  f.text().then(async txt=>{
+    try{
+      const data = JSON.parse(txt);
+      if(Array.isArray(data)){ nodes = data; save(); go("map"); fitMap(); toast("Imported"); return; }
+      if(V && data && data.format === "nodewise-vault"){
+        const p = prompt("Type the passcode for this backup");
+        if(!p) return;
+        const opened = await V.decryptEnvelope(p, data);
+        vaultSession = opened.session; localEnvelope = data;
+        await finishUnlock(opened.data, opened.version);
+        toast("Backup opened");
+        return;
+      }
+      throw 0;
+    }catch(err){ toast("That file could not be read"); }
   });
 });
 $("#btn-reset").addEventListener("click", ()=>{
   if(confirm("Replace all data with the example data?")){ nodes = seed(); save(); selectedId=null; go("map"); fitMap(); }
 });
+const lockBtn = $("#btn-lock");
+if(lockBtn) lockBtn.addEventListener("click", ()=>{ location.reload(); });
+const setupBtn = $("#btn-lock-setup"); if(setupBtn) setupBtn.addEventListener("click", lockSetup);
+const unlockBtn = $("#btn-lock-unlock"); if(unlockBtn) unlockBtn.addEventListener("click", lockUnlock);
+const otherBtn = $("#btn-lock-other"); if(otherBtn) otherBtn.addEventListener("click", ()=>showLock("unlock"));
+const backBtn = $("#btn-lock-back"); if(backBtn) backBtn.addEventListener("click", ()=>showLock(localEnvelope ? "unlock" : "setup"));
 
 /* ---------------- init ---------------- */
-load();
-go("map");
-fitMap();
+boot();

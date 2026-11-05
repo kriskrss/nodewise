@@ -110,14 +110,14 @@ Build all of this in v1:
 
 ### Data
 
-- All data is saved on the device, in the browser. No server in v1.
+- Data is saved on the device, encrypted with your passcode. The encrypted copy syncs to Supabase. See Sync below.
 - First open loads example data that matches the video: Home, Trip to Austria, and Hobbies, with the same tasks.
 - Export saves all data as one JSON file. Import reads that file back.
 - A Reset option restores the example data. It asks first.
 
 ## Out of scope for v1
 
-- Accounts, sync between phones, and sharing with other people.
+- Accounts and sharing with other people. Sync between your own devices is in. See Sync.
 - Push reminders. The app stores the date and slot. It does not send alerts yet.
 - Calendar sync, email, and links to other apps.
 - A native iPhone or Android app. V1 is a web app you add to the home screen.
@@ -194,6 +194,18 @@ Smart lists are worked out from these fields. They are not stored lists.
 - Dates use the phone local date. Today means today where the user is.
 - Keep dates calm. A past due task shows "overdue by Xd" as plain text in its list row. Never as an alert, never in red.
 
+## Sync (added Nov 5, 2026)
+
+Sai's call: give Nodewise its own Supabase project, separate from Break down.
+
+- Project: nodewise, ref vfgxyxftnjupuxxzsnvt, West US (Oregon), free plan, in kriskrss's Org.
+- The map is encrypted in the browser with a passcode before it is stored or synced. The method is PBKDF2 plus AES-GCM, through Web Crypto. The passcode is never stored or sent. There is no passcode reset.
+- Supabase holds one encrypted envelope per passcode in a vaults table. The app finds it by a locator made from the passcode. The locator string starts "nodewise/", so Nodewise and Break down can never read each other's data.
+- On a new device, type the same passcode and the newest copy loads on its own. No file steps.
+- Export now downloads an encrypted backup file. Import asks for that backup's passcode.
+- The project's database password was generated at creation and is not held by Sai this time, at his call on Nov 5, 2026. It is not needed for the app or for dashboard work. It can be reset in the dashboard later if a direct database connection is ever wanted.
+- Status Nov 5, 2026: project created, vaults table set up, anon key wired into the app, and the sync path tested end to end (write, read, delete) against the live project.
+
 ## Tech plan
 
 - One static web app: HTML, CSS, and JavaScript. No build step.
@@ -208,7 +220,7 @@ Smart lists are worked out from these fields. They are not stored lists.
 These were picked so the build could start. Each can be changed in one place.
 
 1. Name: Nodewise, following the Boxwise pattern. The repo and the app use it.
-2. Solo and local only in v1, like Break down v1. Sync is a v2 choice.
+2. Solo in v1. At first it was local only. On Nov 5, 2026 Sai chose sync too, done the same way as Break down. See Sync.
 3. Web app on GitHub Pages, like Break down and the workout coach.
 4. Layout is worked out by the app. Boxes are not free to drag in v1.
 5. Example data matches the video, so the first screen looks and feels like the video.

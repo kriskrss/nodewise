@@ -43,9 +43,11 @@
     <div id="smart-grid"></div>
     <h2>Projects</h2>
     <div id="project-list"></div>
+    <div id="sync-status" class="sync-status"></div>
     <div class="data-row">
-      <button id="btn-export" class="ghost">Export JSON</button>
-      <label class="ghost file-label">Import JSON<input id="file-import" type="file" accept="application/json" hidden></label>
+      <button id="btn-export" class="ghost">Export backup</button>
+      <label class="ghost file-label">Import backup<input id="file-import" type="file" accept="application/json" hidden></label>
+      <button id="btn-lock" class="ghost">Lock</button>
       <button id="btn-reset" class="ghost danger">Reset example data</button>
     </div>
   </section>
@@ -156,6 +158,31 @@
 </section>
 
 <div id="toast" class="hidden"></div>
+
+<!-- LOCK / PASSCODE GATE -->
+<section id="lock" class="hidden">
+  <div class="lock-card">
+    <div class="brand"><span class="brand-mark">✓</span> Nodewise</div>
+    <div id="lock-setup">
+      <h1>Set a passcode</h1>
+      <p>Your map is scrambled on this device with your passcode. The scrambled copy syncs on its own, so your phone, iPad, and desktop stay up to date. The passcode is never stored or sent. There is no passcode reset, so keep it somewhere safe.</p>
+      <input id="lock-pass" type="password" placeholder="New passcode" autocomplete="new-password">
+      <input id="lock-pass2" type="password" placeholder="Type it again" autocomplete="new-password">
+      <button id="btn-lock-setup" class="primary wide-btn">Set passcode</button>
+      <button id="btn-lock-other" class="ghost wide-btn">I already set a passcode on another device</button>
+    </div>
+    <div id="lock-unlock" class="hidden">
+      <h1>Unlock</h1>
+      <p>Type your passcode to open your map.</p>
+      <input id="lock-pass-u" type="password" placeholder="Passcode" autocomplete="current-password">
+      <button id="btn-lock-unlock" class="primary wide-btn">Unlock</button>
+      <button id="btn-lock-back" class="ghost wide-btn">Back</button>
+    </div>
+    <div id="lock-error" class="lock-error"></div>
+  </div>
+</section>
+
+<script src="vault.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
