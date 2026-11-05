@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nodewise — Mind Map Task Manager</title>
+<meta name="theme-color" content="#17131f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand"><span class="brand-mark">✓</span> Nodewise</div>
+  <div class="top-actions">
+    <button id="btn-search" aria-label="Search">⌕</button>
+    <button id="btn-menu" aria-label="Menu">⋯</button>
+  </div>
+</header>
+
+<main>
+  <!-- MAP -->
+  <section id="view-map" class="view active">
+    <div id="canvas-wrap">
+      <div id="world">
+        <svg id="edges" width="4000" height="3200" viewBox="0 0 4000 3200"></svg>
+        <div id="nodes"></div>
+      </div>
+    </div>
+    <div id="map-tools">
+      <button id="btn-undo" title="Undo delete">↩</button>
+      <span id="zoom-label">100%</span>
+      <button id="btn-zoom-out">−</button>
+      <button id="btn-zoom-in">+</button>
+      <button id="btn-fit" title="Fit map">⤢</button>
+    </div>
+  </section>
+
+  <!-- HOME / LISTS -->
+  <section id="view-home" class="view">
+    <h1>Personal</h1>
+    <div id="smart-grid"></div>
+    <h2>Projects</h2>
+    <div id="project-list"></div>
+    <div class="data-row">
+      <button id="btn-export" class="ghost">Export JSON</button>
+      <label class="ghost file-label">Import JSON<input id="file-import" type="file" accept="application/json" hidden></label>
+      <button id="btn-reset" class="ghost danger">Reset example data</button>
+    </div>
+  </section>
+
+  <!-- PROJECT LIST -->
+  <section id="view-project" class="view">
+    <button class="back" data-go="home">‹ Back</button>
+    <div id="project-head"></div>
+    <div id="project-tags"></div>
+    <div id="project-tasks"></div>
+  </section>
+
+  <!-- TODAY -->
+  <section id="view-today" class="view">
+    <h1>⭐ Today <small id="today-date"></small></h1>
+    <div id="today-list"></div>
+  </section>
+
+  <!-- SMART LIST -->
+  <section id="view-smart" class="view">
+    <button class="back" data-go="home">‹ Back</button>
+    <h1 id="smart-title">List</h1>
+    <div id="smart-list"></div>
+  </section>
+
+  <!-- SEARCH -->
+  <section id="view-search" class="view">
+    <button class="back" data-go="map">‹ Back</button>
+    <input id="search-input" type="search" placeholder="Search tasks and projects" autocomplete="off">
+    <div class="search-hint">Recent</div>
+    <div id="search-results"></div>
+  </section>
+</main>
+
+<button id="fab" aria-label="Add">+</button>
+
+<nav id="bottombar">
+  <button data-go="map" class="active">🗺<span>Map</span></button>
+  <button data-go="home">☰<span>Lists</span></button>
+  <button data-go="today">⭐<span>Today</span></button>
+</nav>
+
+<!-- RADIAL MENU -->
+<div id="radial" class="hidden">
+  <div class="radial-ring"></div>
+  <button data-act="add" class="rbtn" style="--a:-90deg">＋<span>Add</span></button>
+  <button data-act="schedule" class="rbtn" style="--a:-30deg">📅<span>Schedule</span></button>
+  <button data-act="color" class="rbtn" style="--a:30deg">🎨<span>Colour</span></button>
+  <button data-act="tag" class="rbtn" style="--a:90deg">🏷<span>Tag</span></button>
+  <button data-act="done" class="rbtn" style="--a:150deg">✓<span>Done</span></button>
+  <button data-act="cut" class="rbtn" style="--a:210deg">✂<span>Cut</span></button>
+  <button id="radial-close">×</button>
+</div>
+
+<!-- COLOR POPOVER -->
+<div id="colorpop" class="sheet-pop hidden">
+  <div id="palette"></div>
+  <div class="thick-row">
+    <button data-thick="2">Thin</button>
+    <button data-thick="3">Medium</button>
+    <button data-thick="4.5">Thick</button>
+    <button id="color-reset">Reset colour</button>
+  </div>
+</div>
+
+<!-- EDIT SHEET -->
+<div id="sheet-backdrop" class="hidden"></div>
+<section id="sheet" class="hidden" aria-label="Edit task">
+  <div class="sheet-grab"></div>
+  <input id="f-title" type="text" placeholder="What's on your mind?">
+  <textarea id="f-note" rows="3" placeholder="Notes. Start a line with - for a bullet."></textarea>
+  <div class="field-row">
+    <label>Emoji <input id="f-emoji" type="text" maxlength="2" placeholder="—"></label>
+    <label class="check"><input id="f-istask" type="checkbox" checked> This is a task</label>
+    <label class="check"><input id="f-done" type="checkbox"> Done</label>
+  </div>
+  <div class="field-row">
+    <label>Date <input id="f-due" type="date"></label>
+    <label>Slot
+      <select id="f-slot">
+        <option value="">None</option>
+        <option value="quick">Quick Wins</option>
+        <option value="morning">Morning</option>
+        <option value="afternoon">Afternoon</option>
+      </select>
+    </label>
+  </div>
+  <div class="field-row quick-dates">
+    <span>Quick set:</span>
+    <button data-qd="today">Today</button>
+    <button data-qd="tomorrow">Tomorrow</button>
+    <button data-qd="notnow">Not Now</button>
+    <button data-qd="clear">Clear date</button>
+  </div>
+  <label class="wide">Tags (comma separated) <input id="f-tags" type="text" placeholder="Important, Waiting"></label>
+  <label class="wide">Belongs to
+    <select id="f-parent"></select>
+  </label>
+  <label class="check"><input id="f-notnow" type="checkbox"> Park in Not Now</label>
+  <div class="sheet-actions">
+    <button id="btn-add-child" class="ghost">+ Add inside</button>
+    <button id="btn-delete" class="ghost danger">Delete</button>
+    <button id="btn-save" class="primary">Save</button>
+  </div>
+  <div class="sheet-actions">
+    <button id="btn-add-another" class="ghost wide-btn">Save and add another in the same place</button>
+  </div>
+</section>
+
+<div id="toast" class="hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>
