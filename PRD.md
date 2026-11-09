@@ -144,6 +144,8 @@ Move between Map, Home, and Today with a bottom bar.
 - Boxes are dark with a thin coloured edge. Text is white.
 - The round plus button is orange. It sits at the bottom right.
 - Type is a clean sans. No decoration that slows reading.
+
+Amendment, Nov 9, 2026: the visual layer now follows the Linear DESIGN.md system (GradientDeck library), applied in styles.css. Canvas Void #08090a, surfaces Carbon #0f1011 and Obsidian #161718, borders Graphite #23252a, text #f7f8f8 with Fog #8a8f98 secondary, one accent in acid lime #e4f222 with near-black text on it (brand mark, plus button, radial buttons, primary actions, app icon). Type is Inter with tight tracking. Radii: cards 12 px, buttons and inputs 6 px, pills stay round. Node colours, tag colours and the other categorical hues are content colours and did not change. The bullets above describe the earlier purple look and are kept as history.
 - Works on a phone first. It must also work on a desktop screen.
 - Boxes never overlap. The app works out the layout itself.
 
