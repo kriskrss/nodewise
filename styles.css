@@ -9,13 +9,13 @@
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:-0.011em;font-feature-settings:'cv01','ss03','zero';overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Play',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:-0.011em;overflow:hidden}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-h1{font-size:22px;font-weight:600;letter-spacing:-0.022em;margin:14px 0 10px} h1 small{color:var(--dim);font-size:14px;font-weight:400}
+h1{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:22px;font-weight:600;letter-spacing:-0.022em;margin:14px 0 10px} h1 small{color:var(--dim);font-size:14px;font-weight:400}
 h2{font-size:16px;font-weight:500;color:var(--dim);margin:20px 0 8px}
 
 #topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(8,9,10,.92);position:relative;z-index:30;border-bottom:1px solid var(--line)}
-.brand{font-weight:600;font-size:17px;letter-spacing:-0.022em}
+.brand{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-weight:600;font-size:17px;letter-spacing:-0.022em}
 .brand-mark{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--accent);color:var(--on-accent);font-weight:600;margin-right:6px;vertical-align:-6px}
 .top-actions button{font-size:20px;padding:6px 10px;color:var(--dim)}
 
@@ -69,7 +69,7 @@ main{position:absolute;inset:52px 0 64px 0}
 .daysleft{color:var(--amber);font-size:12px;float:right}
 .handle{color:var(--dim);cursor:grab;padding:2px 4px;touch-action:none}
 .group-head{font-size:13px;color:var(--dim);text-transform:none;margin:18px 0 4px;font-weight:600}
-#project-head .p-title{font-size:24px;font-weight:600;letter-spacing:-0.022em;margin-top:8px}
+#project-head .p-title{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:24px;font-weight:600;letter-spacing:-0.022em;margin-top:8px}
 #project-head .p-note{color:var(--dim);white-space:pre-wrap;margin-top:6px;font-size:14.5px}
 #project-tags{margin:12px 0 4px}
 .back{color:var(--dim);font-size:15px;padding:8px 0}
@@ -96,7 +96,7 @@ main{position:absolute;inset:52px 0 64px 0}
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--bg2);border-radius:12px 12px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
 #sheet.hidden{display:none}
 .sheet-grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:2px auto 12px}
-#f-title{width:100%;background:none;border:none;color:var(--text);font-size:19px;font-weight:600;padding:6px 0;outline:none}
+#f-title{width:100%;background:none;border:none;color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:19px;font-weight:600;padding:6px 0;outline:none}
 #f-note{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:10px;font:inherit;font-size:14.5px;resize:vertical}
 .field-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .field-row label,.wide{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--dim)}
